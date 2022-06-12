@@ -66,7 +66,6 @@ program
         
         if(lookup_symbol("main", FUN) == NO_INDEX)
           err("undefined reference to 'main'");
-        print_symtab();
       }
       
   ;
@@ -369,7 +368,7 @@ new_ID
 				strcpy(name_with_extension, name); /* copy name into the new var */
 				strcat(name_with_extension, "_"); /* add the extension */
 				strcat(name_with_extension, $3);
-				printf("%s", name_with_extension);
+				//printf("%s", name_with_extension);
 				$$ = lookup_symbol_struct(name_with_extension, STRUCT_ATR, idx_struct_var);
 		}
 	}

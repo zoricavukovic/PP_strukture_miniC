@@ -1,5 +1,5 @@
-//OPIS: koriscenje atributa strukture u okviru assignmenta i exp
-//RETURN: 21
+//OPIS: pristupanje atributu strukture tipa person koji nije definisan za datu strukturu
+//RETURN: 11
 
 struct person {
    int tezina;
@@ -16,13 +16,7 @@ int main() {
   int b;
   a = 11;
   osoba1.visina = 10;
+  osoba2.nesto = 8;
   
-  a = osoba1.visina + 11;
-  b = osoba2.tezina;
-  
-  return a + b;
+  return a;
 }
-
-
-
-
