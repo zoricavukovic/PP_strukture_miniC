@@ -1,5 +1,4 @@
 //OPIS: dodela razlicitih tipova u okviru assignmenta
-//RETURN: 11
 
 struct person {
    int tezina;

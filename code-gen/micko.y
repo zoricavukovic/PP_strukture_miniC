@@ -25,7 +25,10 @@
   int struct_idx = -1;
   struct_atribute* attribute_map[128];
   char* attr_array[200];
-  
+  int num_assigned_struct_atr = 0;
+  int struct_var_idx = -1;
+  int array_assigned_var_idx[100];
+  int num_assigned_var_attr = 0;
   
 %}
 
@@ -39,6 +42,7 @@
 %token _ELSE
 %token _RETURN
 %token _POINT
+%token _COMMA
 %token <s> _ID
 %token <s> _INT_NUMBER
 %token <s> _UINT_NUMBER
@@ -63,7 +67,6 @@
 program
   : struct_list global_struct_list function_list
       {  
-        
         if(lookup_symbol("main", FUN) == NO_INDEX)
           err("undefined reference to 'main'");
       }
@@ -84,7 +87,6 @@ struct_id
            struct_idx = insert_symbol($2, STRUCT, NO_ATR, NO_ATR, NO_ATR);
            struct_atribute* param_types = (struct_atribute*) malloc(sizeof(struct_atribute)*128);
            attribute_map[struct_idx] = param_types;
-           //code("\n@%s: WORD 0", $2);
         }
      }
   ;
@@ -112,16 +114,7 @@ struct_attribute
          }
          if (found == 0){
             attr_array[num_attribute] = $2;
-            //postavljamo kao name atribut za atribute strukture ime_strukture.naziv_atributa
-            
-            char* name_with_extension;
-            const char* name = get_name(struct_idx);
-		name_with_extension = malloc(strlen(name)+1+50); /* make space for the new string (should check the return value ...) */
-		strcpy(name_with_extension, name); /* copy name into the new var */
-		strcat(name_with_extension, "."); /* add the extension */
-		strcat(name_with_extension, $2);
-		
-		
+  
 	    struct_atribute* param_types = attribute_map[struct_idx];
 	    struct_atribute new_attr;
 	    new_attr.type = $1;
@@ -129,8 +122,6 @@ struct_attribute
 	    param_types[num_attribute] = new_attr;
 	    num_attribute += 1;
 	    set_atr1(struct_idx, num_attribute);
-	    //code("\n%s:\n\t\tWORD\t1", $2);
-	    //code("\n\t%s:\n\t\tWORD\t1", $2);
          }
       }
   ;
@@ -141,46 +132,118 @@ global_struct_list
   ;
   
 global_struct
-	:_STRUCT _ID _ID _SEMICOLON {
+	:_STRUCT _ID _ID _SEMICOLON 
+	{
 		int idx_struct_for_variable = lookup_symbol($2, STRUCT);
-        if(idx_struct_for_variable == NO_INDEX)
-           err("'%s' undeclared structure name", $2);		//atr3
-        else{
-           if(lookup_symbol($3, STRUCT_VAR) == NO_INDEX){
-              int idx = insert_symbol($3, STRUCT_VAR, 0, idx_struct_for_variable, NO_ATR);
-              struct_atribute *lista_atr = attribute_map[idx_struct_for_variable];
-              int num_atr = get_atr1(idx_struct_for_variable);
-              int i = 0;
-              //code("\n@%s: WORD 0", $3);
-              
-              	struct_atribute atr1;
-              for(; i < num_atr; i++){
-                
-                struct_atribute atr2 = lista_atr[i];
-                char* name_with_extension;
-            	const char* name = get_name(struct_idx);
-				name_with_extension = malloc(strlen(name)+1+50); /* make space for the new string (should check the return value ...) */
-				strcpy(name_with_extension, $3); /* copy name into the new var */
-				strcat(name_with_extension, "_"); /* add the extension */
-				strcat(name_with_extension, atr2.ime);
-                code("\n%s:\n\t\tWORD\t12", name_with_extension);
-              	atr1 =  lista_atr[i];
-              	char *imeTmp = malloc(50);
-              	strcpy(imeTmp, lista_atr[i].ime);
-              	insert_symbol(name_with_extension, STRUCT_ATR, (lista_atr[i]).type, idx, NO_ATR);
-              	//printf("%s", atr1.ime);	
-              
-              }
-              
-           }
-           else 
-              err("redefinition of '%s'", $3);
-        }
+		if(idx_struct_for_variable == NO_INDEX)
+		   err("'%s' undeclared structure name", $2);		
+		else{
+		   if(lookup_symbol($3, STRUCT_VAR) == NO_INDEX){
+		      int idx = insert_symbol($3, STRUCT_VAR, 0, idx_struct_for_variable, NO_ATR);
+		      struct_atribute *lista_atr = attribute_map[idx_struct_for_variable];
+		      int num_atr = get_atr1(idx_struct_for_variable);
+		      int i = 0;
+		      for(; i < num_atr; i++){
+		        struct_atribute atr2 = lista_atr[i];
+		        char* name_with_extension;
+		    	const char* name = get_name(struct_idx);
+			name_with_extension = malloc(strlen(name)+1+50);
+			strcpy(name_with_extension, $3);
+			strcat(name_with_extension, "_"); 
+			strcat(name_with_extension, atr2.ime);
+		        code("\n%s:\n\t\tWORD\t1", name_with_extension);
+		      	insert_symbol(name_with_extension, STRUCT_ATR, (lista_atr[i]).type, idx, NO_ATR);	
+		      
+		      }
+		      
+		   }
+		   else 
+		      err("redefinition of '%s'", $3);
+		}
 	}
-	//| _STRUCT _ID _ID _ASSIGN _LBRACKET _RBRACKET _SEMICOLON
+	| _STRUCT _ID _ID // struct person osoba1 = { 1, 2, 3};
+	{
+		struct_idx = lookup_symbol($2, STRUCT);
+		if(struct_idx == NO_INDEX)
+		   err("'%s' undeclared structure name", $2);	
+		else{
+		   if(lookup_symbol($3, STRUCT_VAR) == NO_INDEX){
+		      struct_var_idx = insert_symbol($3, STRUCT_VAR, 0, struct_idx, NO_ATR);   
+		   }
+		   else 
+		      err("redefinition of '%s'", $3);
+		}
+	}
+	_ASSIGN _LBRACKET assigned_struct_atr _RBRACKET _SEMICOLON
+	{
+		int num_atr = get_atr1(struct_idx);
+	        if (num_assigned_struct_atr < num_atr){
+	        
+	      	    err("number of assigned struct attributes is less than num of struct attributes.");
+	        }
+		num_assigned_struct_atr = 0;
+	}
 	;
 
+assigned_struct_atr
+  : 
+  | assigned_struct_atr_list
+  ;
   
+assigned_struct_atr_list
+  : literal
+  {
+      num_assigned_struct_atr++;
+      struct_atribute *lista_atr = attribute_map[struct_idx];
+      int num_atr = get_atr1(struct_idx);
+      if (num_assigned_struct_atr > num_atr){
+      	err("number of assigned struct attributes is grater than num of struct attributes.");
+      }else{
+      	struct_atribute atr2 = lista_atr[num_assigned_struct_atr-1];
+      	if (get_type($1) != atr2.type){
+      	  err("incompatible types in assignment struct attribute value.");
+      	}
+      	else{
+		char* name_with_extension;
+	    	const char* name = get_name(struct_var_idx);
+		name_with_extension = malloc(strlen(name)+1+50);
+		strcpy(name_with_extension, name);
+		strcat(name_with_extension, "_");
+		strcat(name_with_extension, atr2.ime);
+		code("\n%s:\n\t\tWORD\t1", name_with_extension);
+	      	int idx = insert_symbol(name_with_extension,STRUCT_ATR, atr2.type, struct_var_idx,atoi(get_name($1))); //u atr2 smestamo dodeljenu vrednost 
+	      	array_assigned_var_idx[num_assigned_var_attr]= idx;
+	      	num_assigned_var_attr++;
+	}
+     }
+  }
+  | assigned_struct_atr_list _COMMA literal
+  {
+      num_assigned_struct_atr++;
+      struct_atribute *lista_atr = attribute_map[struct_idx];
+      int num_atr = get_atr1(struct_idx);
+      if (num_assigned_struct_atr > num_atr){
+      	err("number of assigned struct attributes is grater than num of struct attributes.");
+      }else{
+      	struct_atribute atr2 = lista_atr[num_assigned_struct_atr-1];
+      	if (get_type($3) != atr2.type){
+      	  err("incompatible types in assignment struct attribute value.");
+      	}
+      	else{
+		char* name_with_extension;
+	    	const char* name = get_name(struct_var_idx);
+		name_with_extension = malloc(strlen(name)+1+50);
+		strcpy(name_with_extension, name);
+		strcat(name_with_extension, "_");
+		strcat(name_with_extension, atr2.ime);
+		code("\n%s:\n\t\tWORD\t1", name_with_extension);
+	      	int idx = insert_symbol(name_with_extension,STRUCT_ATR, atr2.type, struct_var_idx,atoi(get_name($3))); //u atr2 smestamo dodeljenu vrednost
+	      	array_assigned_var_idx[num_assigned_var_attr]= idx;
+	      	num_assigned_var_attr++;
+	}
+     }
+  }
+  ;
 
 function_list
   : function
@@ -195,7 +258,7 @@ function
           fun_idx = insert_symbol($2, FUN, $1, NO_ATR, NO_ATR);
         else 
           err("redefinition of function '%s'", $2);
-
+        
         code("\n%s:", $2);
         code("\n\t\tPUSH\t%%14");
         code("\n\t\tMOV \t%%15,%%14");
@@ -229,7 +292,23 @@ body
       {
         if(var_num)
           code("\n\t\tSUBS\t%%15,$%d,%%15", 4*var_num);
-        code("\n@%s_body:", get_name(fun_idx));
+        const char* name = get_name(fun_idx);
+        code("\n@%s_body:", name);
+        char* name_with_extension;
+	name_with_extension = malloc(strlen(name)+1+50);
+	strcpy(name_with_extension, get_name(fun_idx));
+	strcat(name_with_extension, "_body"); 
+	 if (strcmp(name_with_extension, "main_body") == 0){
+              int i = 0;
+              for(; i < num_assigned_var_attr; i++){
+              	int idx = array_assigned_var_idx[i];
+              	char* name_with_extension;
+	    	name_with_extension = malloc(100);
+	    	sprintf(name_with_extension, "%d", get_atr2(idx));
+              	gen_mov(lookup_symbol(name_with_extension, LIT), idx);
+              }
+            
+        }
       }
     statement_list _RBRACKET
   ;
@@ -280,8 +359,7 @@ assignment_statement
       {
           if ($1 != -1){
 	      	if(get_type($1) != get_type($3))
-				err("incompatible types in assignment");
-			
+			err("incompatible types in assignment");
 	    	gen_mov($3, $1);
         }
       }
@@ -335,14 +413,15 @@ exp
 new_ID
   : _ID _POINT _ID
   {
-    //proveriti dal prvi id pripada ijednoj inicijalizovanoj strukturi
+    //proveriti da li prvi id pripada nekoj inicijalizovanoj strukturi
     int idx_struct_var = lookup_symbol($1, STRUCT_VAR);
-    if (idx_struct_var == NO_INDEX){
+	if (idx_struct_var == NO_INDEX){
 		err("undefined struct var '%s'", $1);
 		
 	}
-	else{
-		//dal drugi id pripada tim atributima
+	else
+	{
+		//da li drugi id pripada tim atributima
 		int idx_struct = get_atr1(idx_struct_var);
 		struct_atribute *lista_atr = attribute_map[idx_struct];
 		int num_atr = get_atr1(idx_struct);
@@ -360,16 +439,13 @@ new_ID
 		
 		}
 		else{
-			// i kao povrtanu vrednost pojma indx u tabeli da bi mogao da dohvati tip tog atributa(to je drugi id)
-				//look_up(ime, index_variable) 
-				char* name_with_extension;
-            	const char* name = $1;
-				name_with_extension = malloc(strlen(name)+1+50); /* make space for the new string (should check the return value ...) */
-				strcpy(name_with_extension, name); /* copy name into the new var */
-				strcat(name_with_extension, "_"); /* add the extension */
-				strcat(name_with_extension, $3);
-				//printf("%s", name_with_extension);
-				$$ = lookup_symbol_struct(name_with_extension, STRUCT_ATR, idx_struct_var);
+			char* name_with_extension;
+            		const char* name = $1;
+			name_with_extension = malloc(strlen(name)+1+50);
+			strcpy(name_with_extension, name); 
+			strcat(name_with_extension, "_"); 
+			strcat(name_with_extension, $3);
+			$$ = lookup_symbol_struct(name_with_extension, STRUCT_ATR, idx_struct_var);
 		}
 	}
 	

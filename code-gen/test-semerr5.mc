@@ -1,5 +1,4 @@
 //OPIS: pristupanje atributu strukture tipa person pri cemu ne postoji instanciran tip sa tim imenom 
-//RETURN: 11
 
 struct person {
    int tezina;

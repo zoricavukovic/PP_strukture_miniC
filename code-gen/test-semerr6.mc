@@ -1,5 +1,4 @@
 //OPIS: pristupanje atributu strukture tipa person koji nije definisan za datu strukturu
-//RETURN: 11
 
 struct person {
    int tezina;

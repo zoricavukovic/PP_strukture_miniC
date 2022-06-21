@@ -1,5 +1,4 @@
 //OPIS: instanciranje dve strukture sa istim nazivima
-//RETURN: 5
 struct person {
    int tezina;
    int visina;

@@ -1,5 +1,4 @@
 //OPIS: instanciranje strukture za tip strukture koja nije definisana
-//RETURN: 5
 struct person {
    int tezina;
    int visina;

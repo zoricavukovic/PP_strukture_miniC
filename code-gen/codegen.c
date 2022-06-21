@@ -45,19 +45,7 @@ void gen_sym_name(int index) {
       else
         if(get_kind(index) == LIT)
           code("$%s", get_name(index));
-        else //function, reg
-          if (get_kind(index) == STRUCT_ATR){
-            /*char* name_with_extension;
-            const char* name = get_name(index);
-            unsigned struct_var_idx = get_atr1(index);
-            const char* struct_var_name = get_name(get_atr1(index));
-		name_with_extension = malloc(strlen(name)+1+50);  
-		strcpy(name_with_extension, struct_var_name); 
-		strcat(name_with_extension, "_"); 
-		strcat(name_with_extension, name);*/
-            code("%s", get_name(index));
-          }
-          else
+        else //function, reg, struct_var
             code("%s", get_name(index));
   }
 }

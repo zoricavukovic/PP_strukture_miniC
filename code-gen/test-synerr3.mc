@@ -1,5 +1,5 @@
 //OPIS: pri definisanju atributa strukture nije naveden tip atributa 
-person {
+struct person {
    tezina;
 };
 

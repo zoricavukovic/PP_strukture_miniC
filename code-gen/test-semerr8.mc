@@ -1,5 +1,4 @@
 //OPIS: dodela razlicitih tipova u okviru exp
-//RETURN: 11
 
 struct person {
    int tezina;
